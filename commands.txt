@@ -5,8 +5,9 @@ docker ps                       // check containers
 
 // running container
 docker build docker/ --tag metarl
-docker run -it --rm -v $pwd/:/root/code metarl /bin/bash
-docker run -it --rm -v $pwd/:/root/code -p 5000:5000 metarl /bin/bash
+docker run -it --rm --gpus all -v $pwd/:/root/code metarl /bin/bash
+docker run -it --rm --gpus all -v $pwd/:/root/code -p 5000:5000 metarl /bin/bash
+docker run -it --rm -v $pwd/:/root/code -p 5000:5000 iclavera/learning_to_adapt:first /bin/bash
 
 // network
 netstat -ano | findstr :5000

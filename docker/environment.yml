@@ -54,11 +54,10 @@ dependencies:
         - scipy==1.1.0
         - setuptools==40.2.0
         - six==1.11.0
-        - tensorflow-gpu==1.13.1
         - tensorflow-tensorboard==0.4.0
         - tqdm==4.25.0
         - traitlets==4.3.2
         - urllib3==1.23
         - Werkzeug==0.14.1
         - wheel==0.31.1
-        - plotly # need to run viskit/frontend.py
+#        - plotly # need to run viskit/frontend.py

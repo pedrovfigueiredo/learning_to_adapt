@@ -59,6 +59,9 @@ WORKDIR /
 ENV PYTHONPATH /root/code/learning_to_adapt:$PYTHONPATH
 ENV LD_LIBRARY_PATH /root/.mujoco/mjpro131/bin:$LD_LIBRARY_PATH
 ENV PATH /opt/conda/envs/learning_to_adapt/bin:$PATH
-RUN sudo echo "source activate learning_to_adapt" >> /root/.bashrc
+RUN sudo echo "source activate learning_to_adapt" >> ~/.bashrc
 ENV BASH_ENV /root/.bashrc
 WORKDIR /root/code
+
+RUN pip install --upgrade pip
+RUN #pip install tensorflow==1.13.1
