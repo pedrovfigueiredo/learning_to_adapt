@@ -6,7 +6,6 @@ from pyprind import ProgBar
 import numpy as np
 import time
 import itertools
-import gym
 
 
 class Sampler(BaseSampler):
