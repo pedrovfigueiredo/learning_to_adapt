@@ -9,7 +9,7 @@ docker run -it --rm --gpus all -v $pwd/:/root/code metarl /bin/bash
 docker run -it --rm --gpus all -v $pwd/:/root/code -p 5000:5000 metarl /bin/bash
 docker run -it --rm -v $pwd/:/root/code -p 5000:5000 metarl /bin/bash
 docker run -it --rm --net=host --env="DISPLAY" --volume="$HOME/.Xauthority:/root/.Xauthority:rw" -v $pwd/:/root/code metarl /bin/bash  // not working
-docker run -it --rm -v $pwd/:/root/code metarl /bin/bash
+docker run -it --rm -p 5000:5000 -v $pwd/:/root/code metarl /bin/bash
 
 // network
 netstat -ano | findstr :5000

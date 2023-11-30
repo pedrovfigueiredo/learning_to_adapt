@@ -6,6 +6,7 @@ from pyprind import ProgBar
 import numpy as np
 import time
 import itertools
+import gym
 
 
 class Sampler(BaseSampler):
@@ -68,7 +69,7 @@ class Sampler(BaseSampler):
         policy.reset(dones=[True] * self.vec_env.num_envs)
 
         # initial reset of meta_envs
-        obses = np.asarray(self.vec_env.reset())
+        obses = np.asarray(self.vec_env.reset(), dtype=object)
 
         # self.total_samples = number of episodes needed
         while n_samples < self.total_samples:
@@ -83,7 +84,7 @@ class Sampler(BaseSampler):
                 if a_bs is not None and len(running_paths[0]['observations']) > a_bs + 1:
                     adapt_obs = [np.stack(running_paths[idx]['observations'][-a_bs - 1:-1])
                                  for idx in range(num_envs)]
-                    adapt_act = [np.stack(running_paths[idx]['actions'][-a_bs-1:-1])
+                    adapt_act = [np.stack(running_paths[idx]['actions'][-a_bs - 1:-1])
                                  for idx in range(num_envs)]
                     adapt_next_obs = [np.stack(running_paths[idx]['observations'][-a_bs:])
                                       for idx in range(num_envs)]
@@ -117,7 +118,7 @@ class Sampler(BaseSampler):
                 # if running path is done, add it to paths and empty the running path
                 if done:
                     paths.append(dict(
-                        observations=np.asarray(running_paths[idx]["observations"]),
+                        observations=np.asarray(running_paths[idx]["observations"], dtype=object),
                         actions=np.asarray(running_paths[idx]["actions"]),
                         rewards=np.asarray(running_paths[idx]["rewards"]),
                         dones=np.asarray(running_paths[idx]["dones"]),
@@ -149,3 +150,23 @@ class Sampler(BaseSampler):
 
 def _get_empty_running_paths_dict():
     return dict(observations=[], actions=[], rewards=[], dones=[], env_infos=[], agent_infos=[])
+
+
+if __name__ == '__main__':
+    import gym
+    env = gym.make('CartPole-v1', render_mode='rgb_array')
+
+    sampler = Sampler(
+        env=env,
+        policy=None,
+        num_rollouts=5,
+        max_path_length=1000,
+        n_parallel=5,
+        adapt_batch_size=16
+    )
+
+    paths = sampler.obtain_samples(random=True)
+
+    print(paths)
+
+    print('DONE')

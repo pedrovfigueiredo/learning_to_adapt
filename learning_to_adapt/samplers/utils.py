@@ -9,6 +9,8 @@ def rollout(env, policy, max_path_length=np.inf,
     while hasattr(wrapped_env, '_wrapped_env'):
         wrapped_env = wrapped_env._wrapped_env
 
+    print(f'max_path_length: {max_path_length}')
+
     paths = []
     a_bs = adapt_batch_size
     for i in range(num_rollouts):

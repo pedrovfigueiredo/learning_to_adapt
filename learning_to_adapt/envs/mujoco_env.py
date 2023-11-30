@@ -167,11 +167,14 @@ class MujocoEnv(Env):
         self.current_com = new_com
 
     def get_viewer(self, config=None):
+        print(config)
         if self.viewer is None:
+            print(1)
             self.viewer = MjViewer()
             self.viewer.start()
             self.viewer.set_model(self.model)
         if config is not None:
+            print(2)
             self.viewer.set_window_pose(config["xpos"], config["ypos"])
             self.viewer.set_window_size(config["width"], config["height"])
             self.viewer.set_window_title(config["title"])

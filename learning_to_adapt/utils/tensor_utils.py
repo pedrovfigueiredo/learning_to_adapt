@@ -1,14 +1,14 @@
-import tensorflow as tf
+# import tensorflow as tf
 import numpy as np
 import scipy
 
 
-def compile_function(inputs, outputs, log_name=None):
-    def run(*input_vals):
-        sess = tf.get_default_session()
-        return sess.run(outputs, feed_dict=dict(list(zip(inputs, input_vals))))
-
-    return run
+# def compile_function(inputs, outputs, log_name=None):
+#     def run(*input_vals):
+#         sess = tf.get_default_session()
+#         return sess.run(outputs, feed_dict=dict(list(zip(inputs, input_vals))))
+#
+#     return run
 
 
 def flatten(xs):
