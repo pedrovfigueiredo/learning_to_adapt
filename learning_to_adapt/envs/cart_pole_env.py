@@ -61,7 +61,9 @@ class CartPoleEnv(Serializable):
         if self.first:
             self.first = False
 
-        return self.env.reset()
+        state, _ = self.env.reset()
+
+        return state
 
     def reset_task(self, value=None):
         if self.task == 'cripple':
