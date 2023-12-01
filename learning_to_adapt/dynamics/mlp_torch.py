@@ -15,11 +15,11 @@ class MLP(nn.Module):
         for next_dim in hidden_sizes:
             layers.append(nn.Linear(in_dim, next_dim))
             if hidden_nonlinearity is not None:
-                layers.append(hidden_nonlinearity())
+                layers.append(hidden_nonlinearity)
             in_dim = next_dim
         layers.append(nn.Linear(in_dim, output_dim))
         if output_nonlinearity is not None:
-            layers.append(output_nonlinearity())
+            layers.append(output_nonlinearity)
         
         self.net = nn.Sequential(*layers)
 

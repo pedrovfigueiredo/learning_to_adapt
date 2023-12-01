@@ -68,7 +68,7 @@ class Sampler(BaseSampler):
         policy.reset(dones=[True] * self.vec_env.num_envs)
 
         # initial reset of meta_envs
-        obses = np.asarray(self.vec_env.reset(), dtype=object)
+        obses = np.asarray(self.vec_env.reset())
 
         # self.total_samples = number of episodes needed
         while n_samples < self.total_samples:
@@ -117,7 +117,7 @@ class Sampler(BaseSampler):
                 # if running path is done, add it to paths and empty the running path
                 if done:
                     paths.append(dict(
-                        observations=np.asarray(running_paths[idx]["observations"], dtype=object),
+                        observations=np.asarray(running_paths[idx]["observations"]),
                         actions=np.asarray(running_paths[idx]["actions"]),
                         rewards=np.asarray(running_paths[idx]["rewards"]),
                         dones=np.asarray(running_paths[idx]["dones"]),
@@ -151,21 +151,21 @@ def _get_empty_running_paths_dict():
     return dict(observations=[], actions=[], rewards=[], dones=[], env_infos=[], agent_infos=[])
 
 
-if __name__ == '__main__':
-    import gym
-    env = gym.make('CartPole-v1', render_mode='rgb_array')
-
-    sampler = Sampler(
-        env=env,
-        policy=None,
-        num_rollouts=5,
-        max_path_length=1000,
-        n_parallel=5,
-        adapt_batch_size=16
-    )
-
-    paths = sampler.obtain_samples(random=True)
-
-    print(paths)
-
-    print('DONE')
+# if __name__ == '__main__':
+#     import gym
+#     env = gym.make('CartPole-v1', render_mode='rgb_array')
+#
+#     sampler = Sampler(
+#         env=env,
+#         policy=None,
+#         num_rollouts=5,
+#         max_path_length=1000,
+#         n_parallel=5,
+#         adapt_batch_size=16
+#     )
+#
+#     paths = sampler.obtain_samples(random=True)
+#
+#     print(paths)
+#
+#     print('DONE')

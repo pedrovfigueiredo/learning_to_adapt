@@ -322,23 +322,23 @@ def test_q_learning_agent(qLearner, num_episodes: int = 5):
 
 
 
-if __name__ == '__main__':
-    env = gym.make('CartPole-v1')
-    state_size = env.observation_space.shape[0]
-    action_size = env.action_space.n
-
-    # config
-    steps = 1000
-    gamma = 0.99
-    alpha = 0.001
-    epsilon = 0.1
-
-    options = Options(steps, gamma, alpha, epsilon)
-
-
-    qLearner = ApproxQLearning(env, options)
-
-    train_q_learning_agent(qLearner, 500)
-    test_q_learning_agent(qLearner, 5)
-
-    env.close()
+# if __name__ == '__main__':
+#     env = gym.make('CartPole-v1')
+#     state_size = env.observation_space.shape[0]
+#     action_size = env.action_space.n
+#
+#     # config
+#     steps = 1000
+#     gamma = 0.99
+#     alpha = 0.001
+#     epsilon = 0.1
+#
+#     options = Options(steps, gamma, alpha, epsilon)
+#
+#
+#     qLearner = ApproxQLearning(env, options)
+#
+#     train_q_learning_agent(qLearner, 500)
+#     test_q_learning_agent(qLearner, 5)
+#
+#     env.close()

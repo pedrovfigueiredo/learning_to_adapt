@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 from learning_to_adapt.utils.serializable import Serializable
-from gym.spaces import Box
+from gym.spaces import Box, Discrete
 
 # from rand_param_envs.gym.spaces import Box as OldBox
 
@@ -150,13 +150,13 @@ class NormalizedEnv(Serializable):
 
 normalize = NormalizedEnv
 
-if __name__ == '__main__':
-    from cart_pole_env import CartPoleEnv
-
-    env = CartPoleEnv(task='cripple')
-    n_env = NormalizedEnv(env=env)
-
-    obs, _ = n_env.reset()
-    while True:
-        n_env.step(n_env.action_space.sample())
-        n_env.render()
+# if __name__ == '__main__':
+#     from cart_pole_env import CartPoleEnv
+#
+#     env = CartPoleEnv(task='cripple')
+#     n_env = NormalizedEnv(env=env)
+#
+#     obs, _ = n_env.reset()
+#     while True:
+#         n_env.step(n_env.action_space.sample())
+#         n_env.render()

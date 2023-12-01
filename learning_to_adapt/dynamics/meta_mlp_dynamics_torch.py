@@ -4,6 +4,8 @@ import numpy as np
 import time
 import torch
 import torch.nn as nn
+from gym.spaces import Discrete
+
 from learning_to_adapt.dynamics.mlp_torch import MLP
 from learning_to_adapt.logger import logger
 import learn2learn as l2l
@@ -68,7 +70,7 @@ class MetaMLPDynamicsModel(nn.Module):
 
         # determine dimensionality of state and action space
         self.obs_space_dims = obs_space_dims = env.observation_space.shape[0]
-        self.action_space_dims = action_space_dims = env.action_space.shape[0]
+        self.action_space_dims = action_space_dims = 1 if isinstance(env.action_space, Discrete) else env.action_space.shape[0]
 
         hidden_nonlinearity = self._activations[hidden_nonlinearity]
         output_nonlinearity = self._activations[output_nonlinearity]

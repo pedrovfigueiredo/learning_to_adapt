@@ -23,7 +23,7 @@ class CartPoleEnv(Serializable):
 
         self.task = task
         # self.current_obs = None
-        self.env = gym.make('CartPole-v1', render_mode='human')
+        self.env = gym.make('CartPole-v1')
         self.update_env()
 
     def __getattr__(self, attr):
@@ -62,6 +62,7 @@ class CartPoleEnv(Serializable):
             self.first = False
 
         state, _ = self.env.reset()
+        # return self.env.reset()
 
         return state
 
@@ -86,19 +87,19 @@ class CartPoleEnv(Serializable):
         logger.logkv(prefix + 'StdForwardProgress', np.std(progs))
 
 
-if __name__ == '__main__':
-    from itertools import count
-
-    env = CartPoleEnv(task='cripple')
-
-    for iter in count():
-        print(f'running iter: {iter}')
-        env.reset()
-        env.reset_task()
-        for _ in range(1000):
-            obs, _, done, _ = env.step(env.action_space.sample())
-            # print(env.reward(None, None, obs))
-            env.render()
-
-            if done:
-                break
+# if __name__ == '__main__':
+#     from itertools import count
+#
+#     env = CartPoleEnv(task='cripple')
+#
+#     for iter in count():
+#         print(f'running iter: {iter}')
+#         env.reset()
+#         env.reset_task()
+#         for _ in range(1000):
+#             obs, _, done, _ = env.step(env.action_space.sample())
+#             # print(env.reward(None, None, obs))
+#             env.render()
+#
+#             if done:
+#                 break
