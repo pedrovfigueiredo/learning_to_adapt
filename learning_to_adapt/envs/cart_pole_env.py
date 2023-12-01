@@ -36,7 +36,11 @@ class CartPoleEnv(Serializable):
     # def get_current_obs(self):
     #     return self.current_obs
 
-    def step(self, action: int):
+    def step(self, action):
+        # when the action is provided as len 1 vector
+        if isinstance(action, np.ndarray):
+            action = action[0]
+
         # action must be integer as action_space is Discrete
         action = int(action)
         next_obs, reward, terminated, truncated, info = self.env.step(action)
@@ -100,7 +104,7 @@ class CartPoleEnv(Serializable):
 #         env.reset()
 #         env.reset_task()
 #         for _ in range(1000):
-#             obs = env.step(1.0*env.action_space.sample())
+#             obs = env.step(np.array([env.action_space.sample()]))
 #
 #             if obs[2]:
 #                 print(obs)
