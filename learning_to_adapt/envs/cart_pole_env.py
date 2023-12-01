@@ -36,9 +36,12 @@ class CartPoleEnv(Serializable):
     # def get_current_obs(self):
     #     return self.current_obs
 
-    def step(self, action):
+    def step(self, action: int):
+        # action must be integer as action_space is Discrete
+        action = int(action)
         next_obs, reward, terminated, truncated, info = self.env.step(action)
-        return next_obs, reward, terminated or truncated, info
+        # return false by default as the authors do the similar
+        return next_obs, reward, False, info
 
     def reward(self, obs, action, next_obs) -> float:
         # https://github.com/openai/gym/blob/master/gym/envs/classic_control/cartpole.py
@@ -97,9 +100,12 @@ class CartPoleEnv(Serializable):
 #         env.reset()
 #         env.reset_task()
 #         for _ in range(1000):
-#             obs, _, done, _ = env.step(env.action_space.sample())
+#             obs = env.step(1.0*env.action_space.sample())
+#
+#             if obs[2]:
+#                 print(obs)
 #             # print(env.reward(None, None, obs))
 #             env.render()
 #
-#             if done:
-#                 break
+#             # if done:
+#             #     break

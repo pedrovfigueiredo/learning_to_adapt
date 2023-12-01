@@ -76,7 +76,8 @@ class Sampler(BaseSampler):
             # execute policy
             t = time.time()
             if random:
-                actions = np.stack([self.env.action_space.sample() for _ in range(num_envs)], axis=0)
+                # DOES not work with other environments
+                actions = np.stack([np.array([self.env.action_space.sample()], dtype=np.float32) for _ in range(num_envs)], axis=0)
                 agent_infos = {}
             else:
                 a_bs = self.adapt_batch_size
