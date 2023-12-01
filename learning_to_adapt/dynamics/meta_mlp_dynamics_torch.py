@@ -150,11 +150,11 @@ class MetaMLPDynamicsModel(nn.Module):
 
                 nn_input = torch.cat([obs_batch, act_batch], dim=1)
 
-                nn_input_per_task = torch.split(nn_input, self.meta_batch_size, dim=0)
-                delta_per_task = torch.split(delta_batch, self.meta_batch_size, dim=0)
+                nn_input_per_task = torch.chunk(nn_input, self.meta_batch_size, dim=0)
+                delta_per_task = torch.chunk(delta_batch, self.meta_batch_size, dim=0)
 
-                pre_input_per_task, post_input_per_task = zip(*[torch.split(nn_input, 2, dim=0) for nn_input in nn_input_per_task])
-                pre_delta_per_task, post_delta_per_task = zip(*[torch.split(delta, 2, dim=0) for delta in delta_per_task])
+                pre_input_per_task, post_input_per_task = zip(*[torch.chunk(nn_input, 2, dim=0) for nn_input in nn_input_per_task])
+                pre_delta_per_task, post_delta_per_task = zip(*[torch.chunk(delta, 2, dim=0) for delta in delta_per_task])
 
                 meta_train_loss = 0.0
                 inner_train_loss = 0.0
