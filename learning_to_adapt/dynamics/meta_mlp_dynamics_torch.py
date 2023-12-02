@@ -65,6 +65,7 @@ class MetaMLPDynamicsModel(nn.Module):
         self._dataset_test = None
         self._prev_params = None
         self._adapted_param_values = None
+        self._num_adapted_models = 0
 
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -81,7 +82,8 @@ class MetaMLPDynamicsModel(nn.Module):
             hidden_sizes=hidden_sizes,
             hidden_nonlinearity=hidden_nonlinearity,
             output_nonlinearity=output_nonlinearity
-        )
+        ).to(self.device)
+
         self.optimizer = self._optimizers[optimizer](self.network.parameters(), lr=learning_rate)
         self.maml = l2l.algorithms.MAML(self.network, lr=inner_learning_rate, first_order=False, allow_unused=True)
         self.loss = nn.MSELoss(reduction='mean')
@@ -150,16 +152,16 @@ class MetaMLPDynamicsModel(nn.Module):
 
                 nn_input = torch.cat([obs_batch, act_batch], dim=1)
 
-                nn_input_per_task = torch.split(nn_input, self.meta_batch_size, dim=0)
-                delta_per_task = torch.split(delta_batch, self.meta_batch_size, dim=0)
+                nn_input_per_task = torch.chunk(nn_input, self.meta_batch_size, dim=0)
+                delta_per_task = torch.chunk(delta_batch, self.meta_batch_size, dim=0)
 
-                pre_input_per_task, post_input_per_task = zip(*[torch.split(nn_input, 2, dim=0) for nn_input in nn_input_per_task])
-                pre_delta_per_task, post_delta_per_task = zip(*[torch.split(delta, 2, dim=0) for delta in delta_per_task])
+                pre_input_per_task, post_input_per_task = zip(*[torch.chunk(nn_input_, 2, dim=0) for nn_input_ in nn_input_per_task])
+                pre_delta_per_task, post_delta_per_task = zip(*[torch.chunk(delta, 2, dim=0) for delta in delta_per_task])
 
                 meta_train_loss = 0.0
                 inner_train_loss = 0.0
                 for idx in range(self.meta_batch_size):
-                    learner = self.maml.clone().to(self.device)
+                    learner = self.maml.clone()
 
                     # Inner loop
                     learner, pre_loss = self._inner_loop(learner, pre_input_per_task[idx], pre_delta_per_task[idx])
@@ -191,15 +193,23 @@ class MetaMLPDynamicsModel(nn.Module):
 
                 nn_input = torch.cat([obs_test, act_test], dim=1)
 
-                learner = self.maml.clone().to(self.device)
-                learner.eval()
+                nn_input_per_task = torch.chunk(nn_input, self.meta_batch_size, dim=0)
+                delta_per_task = torch.chunk(delta_test, self.meta_batch_size, dim=0)
 
-                # One-step adaptation + validation loss
-                learner, _ = self._inner_loop(learner, pre_input_per_task[idx], pre_delta_per_task[idx])
+                pre_input_per_task, post_input_per_task = zip(*[torch.chunk(nn_input_, 2, dim=0) for nn_input_ in nn_input_per_task])
+                pre_delta_per_task, post_delta_per_task = zip(*[torch.chunk(delta, 2, dim=0) for delta in delta_per_task])
 
-                delta_pred = learner(nn_input)
-                valid_loss = self.loss(delta_test, delta_pred)
-                valid_losses.append(valid_loss.item())
+                valid_loss = 0.0
+                for idx in range(self.meta_batch_size):
+                    learner = self.maml.clone()
+
+                    # One-step adaptation + validation loss
+                    learner, _ = self._inner_loop(learner, pre_input_per_task[idx], pre_delta_per_task[idx])
+
+                    # Outer loop
+                    post_delta_pred = learner(post_input_per_task[idx])
+                    valid_loss += (self.loss(post_delta_per_task[idx], post_delta_pred)).item()
+                valid_losses.append(valid_loss / self.meta_batch_size)
 
             valid_loss = np.mean(valid_losses)
             if valid_loss_rolling_average is None:
@@ -221,8 +231,9 @@ class MetaMLPDynamicsModel(nn.Module):
                               time.time() - t0))
 
             if valid_loss_rolling_average_prev < valid_loss_rolling_average or epoch == epochs - 1:
-                logger.log('Stopping Training of Model since its valid_loss_rolling_average decreased')
-                break
+                # logger.log('Stopping Training of Model since its valid_loss_rolling_average decreased')
+                # break
+                logger.log('Detected that valid_loss_rolling_average decreased')
             valid_loss_rolling_average_prev = valid_loss_rolling_average
 
         """ ------- Tabular Logging ------- """
@@ -253,21 +264,27 @@ class MetaMLPDynamicsModel(nn.Module):
         return pred_obs
 
     def _predict(self, obs, act):
-        obs, act = self._pad_inputs(obs, act)
-
         obs = torch.from_numpy(obs).float().to(self.device)
         act = torch.from_numpy(act).float().to(self.device)
         nn_input = torch.cat([obs, act], dim=1)
 
-        learner = self.maml.clone().to(self.device)
-        learner.eval()
-
+        delta = []
         if self._adapted_param_values is not None:
-            learner.load_state_dict(self._adapted_param_values)
-        
-        delta = learner(nn_input)
+            nn_input_per_task = torch.chunk(nn_input, self._num_adapted_models, dim=0)
+            for idx in range(self._num_adapted_models):
+                delta.append(self._predict_one(nn_input_per_task[idx], self._adapted_param_values[idx]))
+        else:
+            delta.append(self._predict_one(nn_input))
 
-        return delta.detach().cpu().numpy()
+        return np.concatenate(delta, axis=0)
+
+    def _predict_one(self, nn_input, params=None):
+        learner = self.maml.clone()
+        learner.eval()
+        if params is not None:
+            learner.load_state_dict(params)
+        return learner(nn_input).detach().cpu().numpy()
+
 
     def _inner_loop(self, learner, net_in, net_target):
         pre_delta_pred = learner(net_in)
@@ -276,7 +293,7 @@ class MetaMLPDynamicsModel(nn.Module):
         return learner, pre_loss.item()
 
     def _pad_inputs(self, obs, act, obs_next=None):
-        if self._num_adapted_models < self.meta_batch_size:
+        if self._num_adapted_models < self.meta_batch_size and self._num_adapted_models > 0:
             pad = int(obs.shape[0] / self._num_adapted_models * (self.meta_batch_size - self._num_adapted_models))
             obs = np.concatenate([obs, np.zeros((pad,) + obs.shape[1:])], axis=0)
             act = np.concatenate([act, np.zeros((pad,) + act.shape[1:])], axis=0)
@@ -291,11 +308,10 @@ class MetaMLPDynamicsModel(nn.Module):
     def adapt(self, obs, act, obs_next):
         self._num_adapted_models = len(obs)
         assert len(obs) == len(act) == len(obs_next)
-        obs = np.concatenate([np.concatenate([ob, np.zeros_like(ob)], axis=0) for ob in obs], axis=0)
-        act = np.concatenate([np.concatenate([a, np.zeros_like(a)], axis=0) for a in act], axis=0)
-        obs_next = np.concatenate([np.concatenate([ob, np.zeros_like(ob)], axis=0) for ob in obs_next], axis=0)
+        obs = np.concatenate(obs, axis=0)
+        act = np.concatenate(act, axis=0)
+        obs_next = np.concatenate(obs_next, axis=0)
 
-        obs, act, obs_next = self._pad_inputs(obs, act, obs_next)
         assert obs.shape[0] == act.shape[0] == obs_next.shape[0]
         assert obs.ndim == 2 and obs.shape[1] == self.obs_space_dims
         assert act.ndim == 2 and act.shape[1] == self.action_space_dims
@@ -314,9 +330,16 @@ class MetaMLPDynamicsModel(nn.Module):
         act = torch.from_numpy(act).float().to(self.device)
         delta = torch.from_numpy(delta).float().to(self.device)
 
-        # Adaptation
-        learner, _ = self._inner_loop(self.maml.clone().to(self.device), torch.cat([obs, act], dim=1), delta)
-        self._adapted_param_values = learner.state_dict()
+        nn_input = torch.cat([obs, act], dim=1)
+
+        nn_input_per_task = torch.chunk(nn_input, self._num_adapted_models, dim=0)
+        delta_per_task = torch.chunk(delta, self._num_adapted_models, dim=0)
+
+        self._adapted_param_values = []
+        for idx in range(self._num_adapted_models):
+            # Adaptation
+            learner, _ = self._inner_loop(self.maml.clone(), nn_input_per_task[idx], delta_per_task[idx])
+            self._adapted_param_values.append(learner.state_dict())
 
     def switch_to_pre_adapt(self):
         if self._prev_params is not None:

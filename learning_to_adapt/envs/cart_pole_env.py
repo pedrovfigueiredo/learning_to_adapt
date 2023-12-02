@@ -49,17 +49,16 @@ class CartPoleEnv(Serializable):
 
     def reward(self, obs, action, next_obs) -> float:
         # https://github.com/openai/gym/blob/master/gym/envs/classic_control/cartpole.py
-        x, _, theta, _ = next_obs
+        x, _, theta, _ = np.split(next_obs, next_obs.shape[1], axis=1)
 
-        if not bool(
-                x < -self.env.x_threshold
-                or x > self.env.x_threshold
-                or theta < -self.env.theta_threshold_radians
-                or theta > self.env.theta_threshold_radians
-        ):
-            return 1.0
+        x_th_cond = np.logical_or(x < -self.env.x_threshold, x > self.env.x_threshold)
+        theta_th_cond = np.logical_or(theta < -self.env.theta_threshold_radians, theta > self.env.theta_threshold_radians)
+        combined_cond = np.logical_not(np.logical_or(x_th_cond, theta_th_cond))
 
-        return 0.0
+        rewards = np.zeros_like(x)
+        rewards[combined_cond] = 1.0
+
+        return np.squeeze(rewards)
 
     def reset(self):
         if self.reset_every_episode and not self.first:

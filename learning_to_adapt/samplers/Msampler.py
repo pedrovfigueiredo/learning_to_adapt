@@ -72,7 +72,6 @@ class Sampler(BaseSampler):
 
         # self.total_samples = number of episodes needed
         while n_samples < self.total_samples:
-
             # execute policy
             t = time.time()
             if random:

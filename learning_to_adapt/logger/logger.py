@@ -395,7 +395,12 @@ class Logger(object):
             else:
                 raise NotImplementedError
 
-Logger.DEFAULT = Logger.CURRENT = Logger(dir=None, output_formats=[HumanOutputFormat(sys.stdout)])
+default_dir = 'Training-1e-3-torchv2'
+Logger.DEFAULT = Logger.CURRENT = Logger(dir=default_dir, snapshot_mode='all', output_formats=[make_output_format('stdout', default_dir, ''),  
+                                                                                               make_output_format('log', default_dir, ''),
+                                                                                               make_output_format('json', default_dir, ''),
+                                                                                               make_output_format('csv', default_dir, ''),
+                                                                                            ])
 
 
 # def configure(dir=None, format_strs=None, snapshot_mode='last', snapshot_gap=1):
