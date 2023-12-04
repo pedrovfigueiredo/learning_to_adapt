@@ -1,5 +1,4 @@
 import joblib
-import tensorflow as tf
 import argparse
 import os.path as osp
 from learning_to_adapt.samplers.utils import rollout
@@ -10,7 +9,7 @@ import json
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("param", type=str, help='Directory with the pkl and json file', default='data/grbal')
+    parser.add_argument("--param", type=str, help='Directory with the pkl and json file', default='data/grbal')
     parser.add_argument('--max_path_length', '-l', type=int, default=1000,
                         help='Max length of rollout')
     parser.add_argument('--num_rollouts', '-n', type=int, default=10,
@@ -25,22 +24,23 @@ if __name__ == "__main__":
                         help='Whether stop animation when environment done or continue anyway')
     args = parser.parse_args()
 
+    pkl_path = osp.join(args.param)
 
+    # pkl_path = osp.join('data/grbal', 'params.pkl')
+    # json_path = osp.join('data/grbal', 'params.json')
 
-    with tf.Session() as sess:
-        pkl_path = osp.join(args.param, 'params.pkl')
-        json_path = osp.join(args.param, 'params.json')
-
-        # pkl_path = osp.join('data/grbal', 'params.pkl')
-        # json_path = osp.join('data/grbal', 'params.json')
-
-        print("Testing policy %s" % pkl_path)
-        json_params = json.load(open(json_path, 'r'))
-        data = joblib.load(pkl_path)
-        policy = data['policy']
-        env = data['env']
-        for r in range(args.num_rollouts):
-            path = rollout(env, policy, max_path_length=args.max_path_length,
-                           animated=False, ignore_done=args.ignore_done,
-                           adapt_batch_size=json_params.get('adapt_batch_size', None))[0]
-            print(f'sum of rewards for rollout({r}): {sum(path["rewards"])}')
+    print("Testing policy %s" % pkl_path)
+    # json_params = json.load(open(json_path, 'r'))
+    adapt_batch_size = 16
+    data = joblib.load(pkl_path)
+    policy = data['policy']
+    # policy
+    policy.dynamics_model.reset()
+    env = data['env']
+    # env.task = 'cripple'
+    for r in range(args.num_rollouts):
+        path = rollout(env, policy, max_path_length=args.max_path_length,
+                        animated=False, ignore_done=args.ignore_done,
+                        adapt_batch_size=adapt_batch_size)[0]
+        print(f'sum of rewards for rollout({r}): {sum(path["rewards"])}')
+        print(f'mean of losses for rollout({r}): {sum(path["pred_loss"]) / len(path["pred_loss"])}')

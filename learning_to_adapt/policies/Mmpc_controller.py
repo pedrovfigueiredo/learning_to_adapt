@@ -85,17 +85,16 @@ class MPCController(Policy, Serializable):
 
 
     def get_cem_action(self, observations):
-
         n = self.n_candidates
         m = len(observations)
         h = self.horizon
-        act_dim = self.action_space.shape[0]
+        act_dim = 1
 
         num_elites = max(int(self.n_candidates * self.percent_elites), 1)
         mean = np.zeros((m, h * act_dim))
         std = np.ones((m, h * act_dim))
-        clip_low = np.concatenate([self.action_space.low] * h)
-        clip_high = np.concatenate([self.action_space.high] * h)
+        clip_low = np.array([0] * h)
+        clip_high = np.array([1] * h)
 
         for i in range(self.num_cem_iters):
             z = np.random.normal(size=(n, m,  h * act_dim))
@@ -128,10 +127,10 @@ class MPCController(Policy, Serializable):
         returns = np.zeros((n * m,))
 
         a = self.get_random_action(h * n * m).reshape((h, n * m, -1))
+        cand_a = a[0].reshape((m, n, -1))
 
         for t in range(h):
             if t == 0:
-                cand_a = a[t].reshape((m, n, -1))
                 observation = np.repeat(observations, n, axis=0)
             next_observation = self.dynamics_model.predict(observation, a[t])
             if self.use_reward_model:

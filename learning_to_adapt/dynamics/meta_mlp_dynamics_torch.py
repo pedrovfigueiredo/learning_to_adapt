@@ -8,10 +8,11 @@ from gym.spaces import Discrete
 
 from learning_to_adapt.dynamics.mlp_torch import MLP
 from learning_to_adapt.logger import logger
+from learning_to_adapt.utils.serializable import Serializable
 import learn2learn as l2l
 
 
-class MetaMLPDynamicsModel(nn.Module):
+class MetaMLPDynamicsModel(nn.Module, Serializable):
     """
     Class for MLP continous dynamics model
     """
@@ -88,6 +89,11 @@ class MetaMLPDynamicsModel(nn.Module):
         self.maml = l2l.algorithms.MAML(self.network, lr=inner_learning_rate, first_order=False, allow_unused=True)
         self.loss = nn.MSELoss(reduction='mean')
         self._networks = [self.maml]
+    
+    def reset(self):
+        self._prev_params = None
+        self._num_adapted_models = 0
+        self._adapted_param_values = None
 
     def fit(self, obs, act, obs_next, epochs=1000, compute_normalization=True,
             valid_split_ratio=None, rolling_average_persitency=None, verbose=False, log_tabular=False):

@@ -51,6 +51,8 @@ class Trainer(object):
             itr_start_time = time.time()
             logger.log("\n ---------------- Iteration %d ----------------" % itr)
 
+            self.dynamics_model.reset()
+
             time_env_sampling_start = time.time()
 
             if self.initial_random_samples and itr == 0:

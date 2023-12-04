@@ -19,6 +19,7 @@ def rollout(env, policy, max_path_length=np.inf,
         rewards = []
         agent_infos = []
         env_infos = []
+        pred_loss = []
 
         o = env.reset()
         policy.reset()
@@ -34,25 +35,28 @@ def rollout(env, policy, max_path_length=np.inf,
                                             [np.array(adapt_next_obs)])
             a, agent_info = policy.get_action(o)
             next_o, r, d, env_info = env.step(a)
+            next_o_pred = policy.dynamics_model.predict(o[None], a)
+            pred_loss.append(((next_o_pred - next_o)**2).mean())
             observations.append(o)
             rewards.append(r)
             actions.append(a[0])
             agent_infos.append(agent_info)
             env_infos.append(env_info)
             path_length += 1
-            if d and not ignore_done: # and not animated:
+            if r == 0 or (d and not ignore_done): # and not animated:
                 break
             o = next_o
 
             if animated:
                 env.render()
 
-        paths.append(dict(
-            observations=observations,
-            actons=actions,
-            rewards=rewards,
-            agent_infos=agent_infos,
-            env_infos=env_infos
-        ))
+        paths.append({
+            'observations': observations,
+            'actions': actions,
+            'rewards': rewards,
+            'agent_infos':agent_infos,
+            'env_infos':env_infos,
+            'pred_loss':pred_loss
+        })
 
     return paths
