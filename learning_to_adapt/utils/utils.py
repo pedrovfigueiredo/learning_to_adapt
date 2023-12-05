@@ -2,14 +2,14 @@ import numpy as np
 import scipy
 import scipy.signal
 import json
-import tensorflow as tf
+# import tensorflow as tf
 
-def compile_function(inputs, outputs, log_name=None):
-    def run(*input_vals):
-        sess = tf.get_default_session()
-        return sess.run(outputs, feed_dict=dict(list(zip(inputs, input_vals))))
-
-    return run
+# def compile_function(inputs, outputs, log_name=None):
+#     def run(*input_vals):
+#         sess = tf.get_default_session()
+#         return sess.run(outputs, feed_dict=dict(list(zip(inputs, input_vals))))
+#
+#     return run
 
 def get_original_tf_name(name):
     """
@@ -191,23 +191,23 @@ def create_feed_dict(placeholder_dict, value_dict):
     # match the placeholders with their values
     return dict([(placeholder_dict[key], value_dict[key]) for key in placeholder_dict.keys()])
 
-def set_seed(seed):
-    """
-    Set the random seed for all random number generators
-
-    Args:
-        seed (int) : seed to use
-
-    Returns:
-        None
-    """
-    import random
-    import tensorflow as tf
-    seed %= 4294967294
-    random.seed(seed)
-    np.random.seed(seed)
-    tf.set_random_seed(seed)
-    print('using seed %s' % (str(seed)))
+# def set_seed(seed):
+#     """
+#     Set the random seed for all random number generators
+#
+#     Args:
+#         seed (int) : seed to use
+#
+#     Returns:
+#         None
+#     """
+#     import random
+#     import tensorflow as tf
+#     seed %= 4294967294
+#     random.seed(seed)
+#     np.random.seed(seed)
+#     tf.set_random_seed(seed)
+#     print('using seed %s' % (str(seed)))
 
 
 class ClassEncoder(json.JSONEncoder):

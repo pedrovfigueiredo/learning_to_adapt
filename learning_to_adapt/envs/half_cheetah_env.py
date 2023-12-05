@@ -102,6 +102,7 @@ class HalfCheetahEnv(MujocoEnv, Serializable):
 
 if __name__ == '__main__':
     env = HalfCheetahEnv(task='cripple')
+    print(env.reset())
     while True:
         env.reset()
         env.reset_task()

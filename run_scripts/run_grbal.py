@@ -11,15 +11,14 @@ import json
 import os
 
 EXP_NAME = 'grbal'
-
-
 def run_experiment(config):
-    exp_dir = os.getcwd() + '/data/' + EXP_NAME + '/' + config.get('exp_name', '')
+    exp_dir = os.getcwd() + '/dump/' + EXP_NAME + '/' + config.get('exp_name', '')
     logger.configure(dir=exp_dir, format_strs=['stdout', 'log', 'csv'], snapshot_mode='last')
     json.dump(config, open(exp_dir + '/params.json', 'w'), indent=2, sort_keys=True, cls=ClassEncoder)
 
     env = normalize(config['env'](reset_every_episode=True, task=config['task']))
 
+    # used just for dimensions
     dynamics_model = MetaMLPDynamicsModel(
         name="dyn_model",
         env=env,
@@ -32,6 +31,7 @@ def run_experiment(config):
         hidden_nonlinearity=config['hidden_nonlinearity_model'],
         batch_size=config['adapt_batch_size'],
     )
+
 
     policy = MPCController(
         name="policy",

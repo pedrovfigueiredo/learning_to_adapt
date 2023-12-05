@@ -70,6 +70,7 @@ class Sampler(BaseSampler):
         # initial reset of meta_envs
         obses = np.asarray(self.vec_env.reset())
 
+        # self.total_samples = number of episodes needed
         while n_samples < self.total_samples:
 
             # execute policy

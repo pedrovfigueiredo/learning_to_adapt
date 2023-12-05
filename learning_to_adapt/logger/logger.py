@@ -145,40 +145,40 @@ class CSVOutputFormat(KVWriter):
         self.file.close()
 
 
-class TensorBoardOutputFormat(KVWriter):
-    """
-    Dumps key/value pairs into TensorBoard's numeric format.
-    """
-    def __init__(self, dir):
-        os.makedirs(dir, exist_ok=True)
-        self.dir = dir
-        self.step = 1
-        prefix = 'events'
-        path = osp.join(osp.abspath(dir), prefix)
-        import tensorflow as tf
-        from tensorflow.python import pywrap_tensorflow
-        from tensorflow.core.util import event_pb2
-        from tensorflow.python.util import compat
-        self.tf = tf
-        self.event_pb2 = event_pb2
-        self.pywrap_tensorflow = pywrap_tensorflow
-        self.writer = pywrap_tensorflow.EventsWriter(compat.as_bytes(path))
-
-    def writekvs(self, kvs):
-        def summary_val(k, v):
-            kwargs = {'tag': k, 'simple_value': float(v)}
-            return self.tf.Summary.Value(**kwargs)
-        summary = self.tf.Summary(value=[summary_val(k, v) for k, v in kvs.items()])
-        event = self.event_pb2.Event(wall_time=time.time(), summary=summary)
-        event.step = self.step # is there any reason why you'd want to specify the step?
-        self.writer.WriteEvent(event)
-        self.writer.Flush()
-        self.step += 1
-
-    def close(self):
-        if self.writer:
-            self.writer.Close()
-            self.writer = None
+# class TensorBoardOutputFormat(KVWriter):
+#     """
+#     Dumps key/value pairs into TensorBoard's numeric format.
+#     """
+#     def __init__(self, dir):
+#         os.makedirs(dir, exist_ok=True)
+#         self.dir = dir
+#         self.step = 1
+#         prefix = 'events'
+#         path = osp.join(osp.abspath(dir), prefix)
+#         import tensorflow as tf
+#         from tensorflow.python import pywrap_tensorflow
+#         from tensorflow.core.util import event_pb2
+#         from tensorflow.python.util import compat
+#         self.tf = tf
+#         self.event_pb2 = event_pb2
+#         self.pywrap_tensorflow = pywrap_tensorflow
+#         self.writer = pywrap_tensorflow.EventsWriter(compat.as_bytes(path))
+#
+#     def writekvs(self, kvs):
+#         def summary_val(k, v):
+#             kwargs = {'tag': k, 'simple_value': float(v)}
+#             return self.tf.Summary.Value(**kwargs)
+#         summary = self.tf.Summary(value=[summary_val(k, v) for k, v in kvs.items()])
+#         event = self.event_pb2.Event(wall_time=time.time(), summary=summary)
+#         event.step = self.step # is there any reason why you'd want to specify the step?
+#         self.writer.WriteEvent(event)
+#         self.writer.Flush()
+#         self.step += 1
+#
+#     def close(self):
+#         if self.writer:
+#             self.writer.Close()
+#             self.writer = None
 
 
 def make_output_format(format, ev_dir, log_suffix=''):
@@ -191,8 +191,8 @@ def make_output_format(format, ev_dir, log_suffix=''):
         return JSONOutputFormat(osp.join(ev_dir, 'progress%s.json' % log_suffix))
     elif format == 'csv':
         return CSVOutputFormat(osp.join(ev_dir, 'progress%s.csv' % log_suffix))
-    elif format == 'tensorboard':
-        return TensorBoardOutputFormat(osp.join(ev_dir, 'tb%s' % log_suffix))
+    # elif format == 'tensorboard':
+    #     return TensorBoardOutputFormat(osp.join(ev_dir, 'tb%s' % log_suffix))
     else:
         raise ValueError('Unknown format specified: %s' % (format,))
 
@@ -395,36 +395,41 @@ class Logger(object):
             else:
                 raise NotImplementedError
 
-Logger.DEFAULT = Logger.CURRENT = Logger(dir=None, output_formats=[HumanOutputFormat(sys.stdout)])
+default_dir = 'data'
+Logger.DEFAULT = Logger.CURRENT = Logger(dir=default_dir, snapshot_mode='all', output_formats=[make_output_format('stdout', default_dir, ''),  
+                                                                                               make_output_format('log', default_dir, ''),
+                                                                                               make_output_format('json', default_dir, ''),
+                                                                                               make_output_format('csv', default_dir, ''),
+                                                                                            ])
 
 
-def configure(dir=None, format_strs=None, snapshot_mode='last', snapshot_gap=1):
-    if dir is None:
-        dir = os.getenv('OPENAI_LOGDIR')
-    if dir is None:
-        dir = osp.join(tempfile.gettempdir(),
-            datetime.datetime.now().strftime("openai-%Y-%m-%d-%H-%M-%S-%f"))
-    assert isinstance(dir, str)
-    os.makedirs(dir, exist_ok=True)
-
-    log_suffix = ''
-    from mpi4py import MPI
-    rank = MPI.COMM_WORLD.Get_rank()
-    if rank > 0:
-        log_suffix = "-rank%03i" % rank
-
-    if format_strs is None:
-        strs, strs_mpi = os.getenv('OPENAI_LOG_FORMAT'), os.getenv('OPENAI_LOG_FORMAT_MPI')
-        format_strs = strs_mpi if rank>0 else strs
-        if format_strs is not None:
-            format_strs = format_strs.split(',')
-        else:
-            format_strs = LOG_OUTPUT_FORMATS_MPI if rank>0 else LOG_OUTPUT_FORMATS
-
-    output_formats = [make_output_format(f, dir, log_suffix) for f in format_strs]
-
-    Logger.CURRENT = Logger(dir=dir, output_formats=output_formats, snapshot_mode=snapshot_mode, snapshot_gap=snapshot_gap)
-    log('Logging to %s'%dir)
+# def configure(dir=None, format_strs=None, snapshot_mode='last', snapshot_gap=1):
+#     if dir is None:
+#         dir = os.getenv('OPENAI_LOGDIR')
+#     if dir is None:
+#         dir = osp.join(tempfile.gettempdir(),
+#             datetime.datetime.now().strftime("openai-%Y-%m-%d-%H-%M-%S-%f"))
+#     assert isinstance(dir, str)
+#     os.makedirs(dir, exist_ok=True)
+#
+#     log_suffix = ''
+#     from mpi4py import MPI
+#     rank = MPI.COMM_WORLD.Get_rank()
+#     if rank > 0:
+#         log_suffix = "-rank%03i" % rank
+#
+#     if format_strs is None:
+#         strs, strs_mpi = os.getenv('OPENAI_LOG_FORMAT'), os.getenv('OPENAI_LOG_FORMAT_MPI')
+#         format_strs = strs_mpi if rank>0 else strs
+#         if format_strs is not None:
+#             format_strs = format_strs.split(',')
+#         else:
+#             format_strs = LOG_OUTPUT_FORMATS_MPI if rank>0 else LOG_OUTPUT_FORMATS
+#
+#     output_formats = [make_output_format(f, dir, log_suffix) for f in format_strs]
+#
+#     Logger.CURRENT = Logger(dir=dir, output_formats=output_formats, snapshot_mode=snapshot_mode, snapshot_gap=snapshot_gap)
+#     log('Logging to %s'%dir)
 
 
 def reset():
@@ -434,50 +439,51 @@ def reset():
         log('Reset logger')
 
 
-class scoped_configure(object):
-    def __init__(self, dir=None, format_strs=None):
-        self.dir = dir
-        self.format_strs = format_strs
-        self.prevlogger = None
-
-    def __enter__(self):
-        self.prevlogger = Logger.CURRENT
-        configure(dir=self.dir, format_strs=self.format_strs)
-
-    def __exit__(self, *args):
-        Logger.CURRENT.close()
-        Logger.CURRENT = self.prevlogger
+# class scoped_configure(object):
+#     def __init__(self, dir=None, format_strs=None):
+#         self.dir = dir
+#         self.format_strs = format_strs
+#         self.prevlogger = None
+#
+#     def __enter__(self):
+#         self.prevlogger = Logger.CURRENT
+#         configure(dir=self.dir, format_strs=self.format_strs)
+#
+#     def __exit__(self, *args):
+#         Logger.CURRENT.close()
+#         Logger.CURRENT = self.prevlogger
 
 # ================================================================
 
-def _demo():
-    info("hi")
-    debug("shouldn't appear")
-    set_level(DEBUG)
-    debug("should appear")
-    dir = "/tmp/testlogging"
-    if os.path.exists(dir):
-        shutil.rmtree(dir)
-    configure(dir=dir, format_strs=['stdout', 'log', 'csv'])
-    logkv("a", 3)
-    logkv("b", 2.5)
-    dumpkvs()
-    logkv("b", -2.5)
-    logkv("a", 5.5)
-    dumpkvs()
-    info("^^^ should see a = 5.5")
-    logkv_mean("b", -22.5)
-    logkv_mean("b", -44.4)
-    logkv("a", 5.5)
-    dumpkvs()
-    info("^^^ should see b = 33.3")
-
-    logkv("b", -2.5)
-    dumpkvs()
-
-    logkv("a", "longasslongasslongasslongasslongasslongassvalue")
-    dumpkvs()
+# def _demo():
+#     info("hi")
+#     debug("shouldn't appear")
+#     set_level(DEBUG)
+#     debug("should appear")
+#     dir = "/tmp/testlogging"
+#     if os.path.exists(dir):
+#         shutil.rmtree(dir)
+#     configure(dir=dir, format_strs=['stdout', 'log', 'csv'])
+#     logkv("a", 3)
+#     logkv("b", 2.5)
+#     dumpkvs()
+#     logkv("b", -2.5)
+#     logkv("a", 5.5)
+#     dumpkvs()
+#     info("^^^ should see a = 5.5")
+#     logkv_mean("b", -22.5)
+#     logkv_mean("b", -44.4)
+#     logkv("a", 5.5)
+#     dumpkvs()
+#     info("^^^ should see b = 33.3")
+#
+#     logkv("b", -2.5)
+#     dumpkvs()
+#
+#     logkv("a", "longasslongasslongasslongasslongasslongassvalue")
+#     dumpkvs()
 
 
 if __name__ == "__main__":
-    _demo()
+    pass
+    # _demo()

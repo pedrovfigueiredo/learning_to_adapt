@@ -5,8 +5,8 @@ class Policy(Serializable):
     def __init__(self, env):
         Serializable.quick_init(self, locals())
         self.env = env
-        while hasattr(self.env, 'wrapped_env'):
-            self.env = self.env.wrapped_env
+        # while hasattr(self.env, 'wrapped_env'):
+        #     self.env = self.env.wrapped_env
 
     def get_action(self, observation):
         raise NotImplementedError
