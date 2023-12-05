@@ -27,5 +27,13 @@ In order to visualize and test a learned policy run:
 
 ``` python experiment_utils/sim_policy data/```
 
+To train/test the alternate models run:
+
+```python experiments/exps.py```
+
+Note: Before running the code make sure to set the `TRAIN` parameter to `true` if you would like to train the model, `false` otherwise.
+To change the model set the `ALGO` variable in the exps.py file.
+
+
 ## Acknowledgements
 This repository is based on the original authors' repository: [Author's repository](https://github.com/iclavera/learning_to_adapt).
