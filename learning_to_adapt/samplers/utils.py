@@ -1,9 +1,10 @@
 import numpy as np
+from tqdm import tqdm
 
 
 def rollout(env, policy, max_path_length=np.inf,
             animated=False, ignore_done=False,
-            num_rollouts=1, adapt_batch_size=None):
+            num_rollouts=1, adapt_batch_size=None, adapt=True):
     ''' get wrapped env '''
     wrapped_env = env
     while hasattr(wrapped_env, '_wrapped_env'):
@@ -13,7 +14,7 @@ def rollout(env, policy, max_path_length=np.inf,
 
     paths = []
     a_bs = adapt_batch_size
-    for i in range(num_rollouts):
+    for i in tqdm(range(num_rollouts)):
         observations = []
         actions = []
         rewards = []
@@ -26,7 +27,7 @@ def rollout(env, policy, max_path_length=np.inf,
         path_length = 0
 
         while path_length < max_path_length:
-            if a_bs is not None and len(observations) > a_bs + 1:
+            if adapt and (a_bs is not None and len(observations) > a_bs + 1):
                 adapt_obs = observations[-a_bs - 1:-1]
                 adapt_act = actions[-a_bs - 1:-1]
                 adapt_next_obs = observations[-a_bs:]

@@ -395,7 +395,7 @@ class Logger(object):
             else:
                 raise NotImplementedError
 
-default_dir = 'Training-1e-3-torchv2'
+default_dir = 'data'
 Logger.DEFAULT = Logger.CURRENT = Logger(dir=default_dir, snapshot_mode='all', output_formats=[make_output_format('stdout', default_dir, ''),  
                                                                                                make_output_format('log', default_dir, ''),
                                                                                                make_output_format('json', default_dir, ''),

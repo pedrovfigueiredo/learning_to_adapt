@@ -3,6 +3,7 @@ import argparse
 import os.path as osp
 from learning_to_adapt.samplers.utils import rollout
 import json
+import numpy as np
 
 
 
@@ -26,21 +27,18 @@ if __name__ == "__main__":
 
     pkl_path = osp.join(args.param)
 
-    # pkl_path = osp.join('data/grbal', 'params.pkl')
-    # json_path = osp.join('data/grbal', 'params.json')
-
     print("Testing policy %s" % pkl_path)
-    # json_params = json.load(open(json_path, 'r'))
     adapt_batch_size = 16
     data = joblib.load(pkl_path)
     policy = data['policy']
     # policy
     policy.dynamics_model.reset()
     env = data['env']
-    # env.task = 'cripple'
-    for r in range(args.num_rollouts):
-        path = rollout(env, policy, max_path_length=args.max_path_length,
-                        animated=False, ignore_done=args.ignore_done,
-                        adapt_batch_size=adapt_batch_size)[0]
-        print(f'sum of rewards for rollout({r}): {sum(path["rewards"])}')
-        print(f'mean of losses for rollout({r}): {sum(path["pred_loss"]) / len(path["pred_loss"])}')
+    env.task = 'cripple'
+    path = rollout(env, policy, max_path_length=args.max_path_length,
+                    animated=False, ignore_done=args.ignore_done,
+                    adapt_batch_size=adapt_batch_size, num_rollouts=args.num_rollouts, adapt=True)
+    rollout_r = [sum(p['rewards']) for p in path]
+    print(rollout_r)
+    print(f'avg of rewards over {args.num_rollouts} rollouts: {np.mean(rollout_r)}')
+    # print(f'mean of losses for rollout({r}): {sum(path["pred_loss"]) / len(path["pred_loss"])}')

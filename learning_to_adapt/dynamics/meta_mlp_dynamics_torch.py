@@ -293,6 +293,7 @@ class MetaMLPDynamicsModel(nn.Module, Serializable):
 
 
     def _inner_loop(self, learner, net_in, net_target):
+        learner.zero_grad()
         pre_delta_pred = learner(net_in)
         pre_loss = self.loss(net_target, pre_delta_pred)
         learner.adapt(pre_loss)
